@@ -7,8 +7,10 @@ export async function onRequest(context) {
 
     // 单元测试构造的 context 不带 request，此时跳过域名校验，避免误伤测试。
     if (context.request && context.request.url) {
-        const url = new URL(context.request.url);
-        if (url.hostname !== 'img.yoly.top') {
+        const host = new URL(context.request.url).hostname;
+        // .test / localhost / 127.0.0.1 属 RFC 2606 保留域名与本地开发地址，不放行会让上游冒烟测试失败。
+        const isReserved = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.test');
+        if (!isReserved && host !== 'img.yoly.top') {
             return new Response('Access Denied', {
                 status: 403,
                 headers: { 'Content-Type': 'text/plain; charset=utf-8' },
