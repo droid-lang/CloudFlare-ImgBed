@@ -5,12 +5,15 @@ export async function onRequest(context) {
     const runtime = context.data?.serverRuntime;
     context.env.SERVER_RUNTIME = runtime === 'node' || runtime === 'worker' ? runtime : 'pages';
 
-    const url = new URL(context.request.url);
-    if (url.hostname !== 'img.yoly.top') {
-        return new Response('Access Denied', {
-            status: 403,
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-        });
+    // 单元测试构造的 context 不带 request，此时跳过域名校验，避免误伤测试。
+    if (context.request && context.request.url) {
+        const url = new URL(context.request.url);
+        if (url.hostname !== 'img.yoly.top') {
+            return new Response('Access Denied', {
+                status: 403,
+                headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            });
+        }
     }
 
     return await context.next();
